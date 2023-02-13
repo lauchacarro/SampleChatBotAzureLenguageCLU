@@ -36,7 +36,7 @@ namespace PluralsightBot.Bots
             _logger.LogInformation("Running Dialog from Message Activity");
 
 
-            await _dialog.Run(turnContext, _stateService.DialogStateAccessor, cancellationToken);
+            await _dialog.RunAsync(turnContext, _stateService.DialogStateAccessor, cancellationToken);
 
         }
     }

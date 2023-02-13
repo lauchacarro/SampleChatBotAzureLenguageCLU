@@ -48,13 +48,13 @@ namespace PluralsightBot
             // Configurar Estado
 
 
-            services.AddSingleton<IStorage, MemoryStorage>();
+            //services.AddSingleton<IStorage, MemoryStorage>();
 
 
-            //var storageAccount = "DefaultEndpointsProtocol=https;AccountName=virtualassistantsacct;AccountKey=AOeM7sQzvDEguYNDsMmg0Il2PT8fuvpuF9ADCeBjEC2QAt/wb6/gIEZTcYSnh8O3Ld0zuBLe6mcJ+AStDeudCQ==;EndpointSuffix=core.windows.net";
-            //var containerName = "botstatedata";
+            var storageAccount = "DefaultEndpointsProtocol=https;AccountName=virtualassistantsacct;AccountKey=AOeM7sQzvDEguYNDsMmg0Il2PT8fuvpuF9ADCeBjEC2QAt/wb6/gIEZTcYSnh8O3Ld0zuBLe6mcJ+AStDeudCQ==;EndpointSuffix=core.windows.net";
+            var containerName = "botstatedata";
 
-            //services.AddSingleton<IStorage>(new BlobsStorage(storageAccount, containerName));
+            services.AddSingleton<IStorage>(new BlobsStorage(storageAccount, containerName));
 
 
             services.AddSingleton<UserState>();
