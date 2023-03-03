@@ -61,6 +61,7 @@ namespace PluralsightBot
             services.AddSingleton<ConversationState>();
 
             services.AddSingleton<BotStateService>();
+            services.AddSingleton<BotService>();
 
 
 

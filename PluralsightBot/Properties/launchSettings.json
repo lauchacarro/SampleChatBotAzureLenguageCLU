@@ -13,7 +13,8 @@
       "commandName": "IISExpress",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AZURE_TENANT_ID": "bcdf9629-67bb-40f8-8f08-fd6adf7ffd2b"
       }
     },
     "EchoBot": {

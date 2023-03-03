@@ -6,6 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.AI.Language.Conversations" Version="1.0.0" />
+    <PackageReference Include="Azure.Identity" Version="1.8.2" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="7.0.2" />
     <PackageReference Include="Microsoft.Bot.Builder.Azure" Version="4.19.1" />
     <PackageReference Include="Microsoft.Bot.Builder.Dialogs" Version="4.19.1" />

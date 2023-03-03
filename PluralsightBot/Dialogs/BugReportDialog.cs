@@ -9,6 +9,7 @@ using System.Linq;
 using System;
 using Microsoft.Bot.Builder.Dialogs.Choices;
 using System.Text.RegularExpressions;
+using System.Timers;
 
 namespace PluralsightBot.Dialogs
 {
@@ -47,36 +48,70 @@ namespace PluralsightBot.Dialogs
         private async Task<DialogTurnResult> DescriptionStepAsync(WaterfallStepContext waterfallStepContext, CancellationToken cancellationToken)
         {
 
-            return await waterfallStepContext.PromptAsync($"{nameof(BugReportDialog)}.description", new PromptOptions
+            UserProfile userProfile = (UserProfile)waterfallStepContext.Options;
+
+            if (string.IsNullOrWhiteSpace(userProfile.Description))
             {
-                Prompt = MessageFactory.Text("Enter a description for a report")
-            }, cancellationToken);
+                return await waterfallStepContext.PromptAsync($"{nameof(BugReportDialog)}.description", new PromptOptions
+                {
+                    Prompt = MessageFactory.Text("Enter a description for a report")
+                }, cancellationToken);
+            }
+
+
+            return await waterfallStepContext.NextAsync(userProfile.Description, cancellationToken);
 
         }
 
         private async Task<DialogTurnResult> CallbackTimeStepAsync(WaterfallStepContext waterfallStepContext, CancellationToken cancellationToken)
         {
 
+            
+
             waterfallStepContext.Values["description"] = (string)waterfallStepContext.Result;
 
-            return await waterfallStepContext.PromptAsync($"{nameof(BugReportDialog)}.callbackTime", new PromptOptions
+            UserProfile userProfile = (UserProfile)waterfallStepContext.Options;
+
+            if(!userProfile.CallbackTime.HasValue)
             {
-                Prompt = MessageFactory.Text("Please enter in a callback time"),
-                RetryPrompt = MessageFactory.Text("The value entered must be between the hours of 9am to 5pm."),
-            }, cancellationToken);
+                return await waterfallStepContext.PromptAsync($"{nameof(BugReportDialog)}.callbackTime", new PromptOptions
+                {
+                    Prompt = MessageFactory.Text("Please enter in a callback time"),
+                    RetryPrompt = MessageFactory.Text("The value entered must be between the hours of 9am to 5pm."),
+                }, cancellationToken);
+            }
+
+
+            return await waterfallStepContext.NextAsync(userProfile.CallbackTime.Value, cancellationToken);
 
         }
 
         private async Task<DialogTurnResult> PhoneNumberStepAsync(WaterfallStepContext waterfallStepContext, CancellationToken cancellationToken)
         {
+            UserProfile userProfile = (UserProfile)waterfallStepContext.Options;
 
-            waterfallStepContext.Values["callbackTime"] = Convert.ToDateTime(((IList<DateTimeResolution>)waterfallStepContext.Result).FirstOrDefault().Value);
-
-            return await waterfallStepContext.PromptAsync($"{nameof(BugReportDialog)}.phoneNumber", new PromptOptions
+            if(waterfallStepContext.Result is DateTime time){
+                waterfallStepContext.Values["callbackTime"] = time;
+            }
+            else
             {
-                Prompt = MessageFactory.Text("Please enter in a phone number that we can call you back at."),
-                RetryPrompt = MessageFactory.Text("Please enter a valid phone number"),
-            }, cancellationToken);
+                waterfallStepContext.Values["callbackTime"] = Convert.ToDateTime(((IList<DateTimeResolution>)waterfallStepContext.Result).FirstOrDefault().Value);
+
+            }
+
+
+
+            if (string.IsNullOrWhiteSpace(userProfile.PhoneNumber))
+            {
+                return await waterfallStepContext.PromptAsync($"{nameof(BugReportDialog)}.phoneNumber", new PromptOptions
+                {
+                    Prompt = MessageFactory.Text("Please enter in a phone number that we can call you back at."),
+                    RetryPrompt = MessageFactory.Text("Please enter a valid phone number"),
+                }, cancellationToken);
+            }
+
+            return await waterfallStepContext.NextAsync(userProfile.PhoneNumber, cancellationToken);
+
 
         }
 
@@ -85,18 +120,36 @@ namespace PluralsightBot.Dialogs
 
             waterfallStepContext.Values["phoneNumber"] = (string)waterfallStepContext.Result;
 
-            return await waterfallStepContext.PromptAsync($"{nameof(BugReportDialog)}.bug", new PromptOptions
+            UserProfile userProfile = (UserProfile)waterfallStepContext.Options;
+
+            if (string.IsNullOrWhiteSpace(userProfile.Bug))
             {
-                Prompt = MessageFactory.Text("Please enter the bug type:"),
-                Choices = ChoiceFactory.ToChoices(new List<string>() { "Security", "Crash", "Power", "Perfomance", "Usability", "Serious bug", "Report" })
-            }, cancellationToken);
+                return await waterfallStepContext.PromptAsync($"{nameof(BugReportDialog)}.bug", new PromptOptions
+                {
+                    Prompt = MessageFactory.Text("Please enter the bug type:"),
+                    Choices = ChoiceFactory.ToChoices(new List<string>() { "Security", "Crash", "Power", "Perfomance", "Usability", "Serious bug", "Report" })
+                }, cancellationToken);
+            }
+
+            return await waterfallStepContext.NextAsync(userProfile.Bug, cancellationToken);
+
 
         }
 
         private async Task<DialogTurnResult> SummaryStepAsync(WaterfallStepContext waterfallStepContext, CancellationToken cancellationToken)
         {
 
-            waterfallStepContext.Values["bug"] = ((FoundChoice)waterfallStepContext.Result).Value;
+            if (waterfallStepContext.Result is string bug)
+            {
+                waterfallStepContext.Values["bug"] = bug;
+            }
+            else
+            {
+                waterfallStepContext.Values["bug"] = ((FoundChoice)waterfallStepContext.Result).Value;
+
+            }
+
+
 
             UserProfile userProfile = await _stateService.UserProfileAccessor.GetAsync(waterfallStepContext.Context, () => new());
 
@@ -108,12 +161,12 @@ namespace PluralsightBot.Dialogs
 
             await waterfallStepContext.Context.SendActivityAsync(MessageFactory.Text("This is the summary of your bug report"), cancellationToken);
             await waterfallStepContext.Context.SendActivityAsync(MessageFactory.Text($"Description: {userProfile.Description}"), cancellationToken);
-            await waterfallStepContext.Context.SendActivityAsync(MessageFactory.Text($"Callback Time: {userProfile.CallbackTime.ToShortTimeString()}"), cancellationToken);
+            await waterfallStepContext.Context.SendActivityAsync(MessageFactory.Text($"Callback Time: {userProfile.CallbackTime.Value.ToLongDateString()} {userProfile.CallbackTime.Value.ToLongTimeString()}"), cancellationToken);
             await waterfallStepContext.Context.SendActivityAsync(MessageFactory.Text($"Phone Number: {userProfile.PhoneNumber}"), cancellationToken);
             await waterfallStepContext.Context.SendActivityAsync(MessageFactory.Text($"Bug Typer: {userProfile.Bug}"), cancellationToken);
 
 
-            await _stateService.UserProfileAccessor.SetAsync(waterfallStepContext.Context, userProfile);
+            await _stateService.UserProfileAccessor.SetAsync(waterfallStepContext.Context, userProfile, cancellationToken);
 
             return await waterfallStepContext.EndDialogAsync(null, cancellationToken);
 
